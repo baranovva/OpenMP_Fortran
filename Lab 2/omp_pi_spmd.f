@@ -1,0 +1,22 @@
+      PROGRAM OPENMP_PI_SPMD
+      INCLUDE 'omp_lib.h'
+      INTEGER I, N, NTHREADS, TID, ISTART, IEND
+      DOUBLE PRECISION X, STEP, PI, THREAD_SUM /0.0/
+      PARAMETER (N=100000000)
+      STEP = 1.0/N
+      T1 = OMP_GET_WTIME()
+!$OMP PARALLEL IF(N .GE. 100) PRIVATE(TID, X, I, ISTART, IEND) REDUCTION(+:THREAD_SUM)
+      TID = OMP_GET_THREAD_NUM()
+      IF (TID.EQ.0) NTHREADS = OMP_GET_NUM_THREADS() 
+      ISTART = TID+1
+      IEND = N
+      DO I=ISTART, IEND, NTHREADS
+        X = (I-0.5)*STEP
+        THREAD_SUM = THREAD_SUM + 1.0/SQRT(1.0-X*X)
+      END DO
+!$OMP END PARALLEL
+      T2 = OMP_GET_WTIME()
+      PRINT *, 'computational time: ', T2-T1, 's'
+      PI = STEP * THREAD_SUM
+      PRINT *, 'PI = ', PI
+      END
