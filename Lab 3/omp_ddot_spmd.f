@@ -1,0 +1,28 @@
+      PROGRAM OPENMP_DDOT_SPMD
+      INCLUDE 'omp_lib.h'
+      INTEGER I, N, ISTART, IEND, TID, NTHREADS
+      PARAMETER (N = 100000000)
+      DOUBLE PRECISION R /0.0/, THREAD_SUM /0.0/, T1, T2
+      DOUBLE PRECISION, ALLOCATABLE :: X(:), Y (:)
+      ALLOCATE (X(N), Y(N))
+      X(1:N) = 1.0
+      Y(1:N) = 2.0
+      T1 = OMP_GET_WTIME()
+!$OMP PARALLEL PRIVATE(TID, I, ISTART, IEND)
+!$OMP&         FIRSTPRIVATE(THREAD_SUM)
+      TID = OMP_GET_THREAD_NUM()
+!$OMP SINGLE
+      NTHREADS = OMP_GET_NUM_THREADS()
+!$OMP END SINGLE
+      ISTART = TID * N / NTHREADS + 1
+      IEND = ISTART + N / NTHREADS - 1
+      DO I=ISTART, IEND
+        THREAD_SUM = THREAD_SUM + X(I)*Y(I)
+      END DO
+!$OMP ATOMIC
+      R = R + THREAD_SUM
+!$OMP END PARALLEL
+      T2 = OMP_GET_WTIME()
+      PRINT *, 'computational time: ', T2-T1, 's'
+      DEALLOCATE (X, Y)
+      END
